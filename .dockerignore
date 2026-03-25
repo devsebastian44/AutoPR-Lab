@@ -1,0 +1,37 @@
+# Git and version control
+.git
+.github
+.gitignore
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# Coverage and reports
+.coverage
+htmlcov/
+nosetests.xml
+coverage.xml
+*.lcov
+safety-report.json
+bandit-report.json
+scan_result.json
+security-scan.json
+
+# IDEs
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
