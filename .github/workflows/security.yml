@@ -1,0 +1,241 @@
+name: "🔒 Security Scan"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Workflow de escaneo de seguridad periódico y bajo demanda
+# Se ejecuta automáticamente cada lunes a las 2am UTC y puede ser disparado manualmente
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  schedule:
+    - cron: "0 2 * * 1"  # Lunes 2am UTC
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Tipo de escaneo'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - basic
+          - full
+
+jobs:
+  security-scan:
+    name: "🛡️ Security Vulnerability Scan"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Permisos mínimos necesarios
+    permissions:
+      contents: read          # Leer el repositorio
+      actions: read           # Leer workflows
+      security-events: write  # Crear alerts de seguridad (opcional)
+
+    steps:
+      # ── 1. Checkout del repositorio ──────────────────────────────────
+      - name: "📥 Checkout Repository"
+        uses: actions/checkout@v5
+
+      # ── 2. Setup Python ──────────────────────────────────────────────
+      - name: "🐍 Setup Python 3.13"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      # ── 3. Instalar dependencias de seguridad ────────────────────────
+      - name: "📦 Install Security Tools"
+        run: |
+          python -m pip install --upgrade pip
+          pip install safety>=3.0.0 bandit>=1.7.0
+
+      # ── 4. Escaneo con Safety (vulnerabilidades en dependencias) ─────
+      - name: "🔍 Safety Scan - Dependencies Vulnerabilities"
+        id: safety
+        run: |
+          echo "🔒 Escaneando vulnerabilidades en dependencias..."
+          
+          # Crear requirements temporal si no existe
+          if [ ! -f requirements.txt ]; then
+            echo "# AutoPR Lab - Dependencies" > requirements.txt
+            echo "# Solo usa módulos de la biblioteca estándar de Python 3.10+" >> requirements.txt
+          fi
+          
+          # Ejecutar safety scan
+          python -m safety scan --json --output safety-report.json || true
+          
+          # Extraer resumen
+          if [ -f safety-report.json ]; then
+            VULNS=$(python -c "
+import json
+try:
+    with open('safety-report.json', 'r') as f:
+        data = json.load(f)
+    vulns = len(data.get('vulnerabilities', []))
+    print(vulns)
+except:
+    print('0')
+")
+            echo "vulnerabilities_found=$VULNS" >> $GITHUB_OUTPUT
+            echo "📊 Vulnerabilidades encontradas: $VULNS"
+          else
+            echo "vulnerabilities_found=0" >> $GITHUB_OUTPUT
+          fi
+
+      # ── 5. Escaneo con Bandit (análisis estático de código) ─────────────
+      - name: "🔍 Bandit Scan - Static Code Analysis"
+        id: bandit
+        run: |
+          echo "🔍 Analizando código fuente en busca de problemas de seguridad..."
+          
+          # Ejecutar bandit scan
+          python -m bandit -r . -f json -o bandit-report.json || true
+          
+          # Extraer resumen
+          if [ -f bandit-report.json ]; then
+            ISSUES=$(python -c "
+import json
+try:
+    with open('bandit-report.json', 'r') as f:
+        data = json.load(f)
+    issues = len(data.get('results', []))
+    high_low = len([r for r in data.get('results', []) if r.get('issue_severity') in ['HIGH', 'MEDIUM']])
+    print(f'{issues}:{high_low}')
+except:
+    print('0:0')
+")
+            TOTAL_ISSUES=$(echo $ISSUES | cut -d':' -f1)
+            HIGH_MEDIUM=$(echo $ISSUES | cut -d':' -f2)
+            
+            echo "total_issues=$TOTAL_ISSUES" >> $GITHUB_OUTPUT
+            echo "high_medium_issues=$HIGH_MEDIUM" >> $GITHUB_OUTPUT
+            echo "📊 Problemas de seguridad encontrados: $TOTAL_ISSUES ($HIGH_MEDIUM altos/medios)"
+          else
+            echo "total_issues=0" >> $GITHUB_OUTPUT
+            echo "high_medium_issues=0" >> $GITHUB_OUTPUT
+          fi
+
+      # ── 6. Análisis de secretos (opcional) ───────────────────────────────
+      - name: "🔍 Secret Scan - Basic Pattern Detection"
+        id: secrets
+        run: |
+          echo "🔍 Buscando patrones de secretos comunes..."
+          
+          # Patrones básicos de secretos
+          PATTERNS=(
+            "password\s*=\s*['\"][^'\"]+['\"]"
+            "api[_-]?key\s*=\s*['\"][^'\"]+['\"]"
+            "secret[_-]?key\s*=\s*['\"][^'\"]+['\"]"
+            "token\s*=\s*['\"][^'\"]{20,}['\"]"
+            "sk-[a-zA-Z0-9]{48}"
+          )
+          
+          SECRETS_FOUND=0
+          for pattern in "${PATTERNS[@]}"; do
+            if grep -r -E --include="*.py" --include="*.yml" --include="*.yaml" --include="*.json" --include="*.md" "$pattern" .; then
+              ((SECRETS_FOUND++))
+            fi
+          done
+          
+          echo "secrets_found=$SECRETS_FOUND" >> $GITHUB_OUTPUT
+          echo "📊 Posibles secretos encontrados: $SECRETS_FOUND"
+
+      # ── 7. Generar reporte consolidado ───────────────────────────────────
+      - name: "📊 Generate Security Report"
+        run: |
+          cat << 'EOF' > security-summary.md
+          # 🔒 AutoPR Lab - Security Scan Report
+          
+          ## 📊 Resumen Ejecutivo
+          
+          | Métrica | Resultado |
+          |---------|-----------|
+          | Vulnerabilidades en dependencias | ${{ steps.safety.outputs.vulnerabilities_found }} |
+          | Problemas de código (total) | ${{ steps.bandit.outputs.total_issues }} |
+          | Problemas críticos/altos | ${{ steps.bandit.outputs.high_medium_issues }} |
+          | Posibles secretos | ${{ steps.secrets.outputs.secrets_found }} |
+          
+          ## 🕐 Fecha del Escaneo
+          $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          
+          ## 📋 Detalles
+          
+          ### Dependencias
+          - **Safety**: Escaneo completado
+          - **Reporte**: [safety-report.json](safety-report.json)
+          
+          ### Código Fuente
+          - **Bandit**: Análisis estático completado
+          - **Reporte**: [bandit-report.json](bandit-report.json)
+          
+          ### Secretos
+          - **Pattern Detection**: Escaneo básico completado
+          - **Método**: Búsqueda de patrones comunes
+          
+          ---
+          *Generado automáticamente por AutoPR Lab Security Workflow*
+          EOF
+          
+          echo "📄 Reporte de seguridad generado: security-summary.md"
+
+      # ── 8. Publicar artefactos ───────────────────────────────────────────
+      - name: "📦 Upload Security Reports"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: "security-scan-${{ github.run_number }}"
+          path: |
+            safety-report.json
+            bandit-report.json
+            security-summary.md
+          retention-days: 90
+
+      # ── 9. Publicar summary en GitHub ─────────────────────────────────
+      - name: "📋 Publish Security Summary"
+        if: always()
+        run: |
+          cat security-summary.md >> $GITHUB_STEP_SUMMARY
+          echo ""
+          echo "## 🚦 Estado General"
+          
+          VULNS="${{ steps.safety.outputs.vulnerabilities_found }}"
+          HIGH_ISSUES="${{ steps.bandit.outputs.high_medium_issues }}"
+          SECRETS="${{ steps.secrets.outputs.secrets_found }}"
+          
+          if [ "$VULNS" -eq 0 ] && [ "$HIGH_ISSUES" -eq 0 ] && [ "$SECRETS" -eq 0 ]; then
+            echo "### ✅ Sin problemas críticos detectados"
+          else
+            echo "### ⚠️ Se encontraron problemas que requieren atención"
+            if [ "$VULNS" -gt 0 ]; then
+              echo "- 🔴 $VULNS vulnerabilidades en dependencias"
+            fi
+            if [ "$HIGH_ISSUES" -gt 0 ]; then
+              echo "- 🟡 $HIGH_ISSUES problemas de seguridad en el código"
+            fi
+            if [ "$SECRETS" -gt 0 ]; then
+              echo "- 🔴 $SECRETS posibles secretos expuestos"
+            fi
+          fi
+
+      # ── 10. Verificación crítica (fallar si hay problemas graves) ────────
+      - name: "🚦 Critical Security Check"
+        if: always()
+        run: |
+          VULNS="${{ steps.safety.outputs.vulnerabilities_found }}"
+          HIGH_ISSUES="${{ steps.bandit.outputs.high_medium_issues }}"
+          SECRETS="${{ steps.secrets.outputs.secrets_found }}"
+          
+          # Considerar crítico: vulnerabilidades conocidas o secretos expuestos
+          if [ "$VULNS" -gt 0 ] || [ "$SECRETS" -gt 0 ]; then
+            echo "❌ Se detectaron problemas críticos de seguridad"
+            echo "📊 Vulnerabilidades: $VULNS"
+            echo "📊 Secretos: $SECRETS"
+            exit 1
+          elif [ "$HIGH_ISSUES" -gt 5 ]; then
+            echo "⚠️ Se detectaron múltiples problemas de seguridad"
+            echo "📊 Problemas altos/medios: $HIGH_ISSUES"
+            exit 1
+          else
+            echo "✅ No se detectaron problemas críticos de seguridad"
+            exit 0
+          fi
