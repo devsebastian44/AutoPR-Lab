@@ -79,7 +79,10 @@ class GitHubAPI:
 
     def get_pr_info(self) -> dict[str, Any]:
         """Obtiene información del PR."""
-        return cast(dict[str, Any], self._request("GET", f"repos/{self.repo}/pulls/{self.pr_number}"))
+        return cast(
+            dict[str, Any],
+            self._request("GET", f"repos/{self.repo}/pulls/{self.pr_number}"),
+        )
 
     def get_changed_files(self) -> list[dict[str, Any]]:
         """Obtiene lista de archivos modificados en el PR."""
@@ -137,31 +140,40 @@ class GitHubAPI:
     def add_comment(self, body: str) -> dict[str, Any]:
         """Agrega un comentario al PR."""
         logger.info(f"💬 Agregando comentario al PR #{self.pr_number}")
-        return cast(dict[str, Any], self._request(
-            "POST",
-            f"repos/{self.repo}/issues/{self.pr_number}/comments",
-            body={"body": body},
-        ))
+        return cast(
+            dict[str, Any],
+            self._request(
+                "POST",
+                f"repos/{self.repo}/issues/{self.pr_number}/comments",
+                body={"body": body},
+            ),
+        )
 
     def approve_pr(
         self, message: str = "AutoPR Lab: ✅ Aprobado automáticamente"
     ) -> dict[str, Any]:
         """Aprueba el PR con un review."""
         logger.info(f"✅ Aprobando PR #{self.pr_number}")
-        return cast(dict[str, Any], self._request(
-            "POST",
-            f"repos/{self.repo}/pulls/{self.pr_number}/reviews",
-            body={"body": message, "event": "APPROVE"},
-        ))
+        return cast(
+            dict[str, Any],
+            self._request(
+                "POST",
+                f"repos/{self.repo}/pulls/{self.pr_number}/reviews",
+                body={"body": message, "event": "APPROVE"},
+            ),
+        )
 
     def request_changes(self, message: str) -> dict[str, Any]:
         """Solicita cambios en el PR (REQUEST_CHANGES review)."""
         logger.info(f"❌ Solicitando cambios en PR #{self.pr_number}")
-        return cast(dict[str, Any], self._request(
-            "POST",
-            f"repos/{self.repo}/pulls/{self.pr_number}/reviews",
-            body={"body": message, "event": "REQUEST_CHANGES"},
-        ))
+        return cast(
+            dict[str, Any],
+            self._request(
+                "POST",
+                f"repos/{self.repo}/pulls/{self.pr_number}/reviews",
+                body={"body": message, "event": "REQUEST_CHANGES"},
+            ),
+        )
 
     def merge_pr(
         self,
@@ -190,11 +202,14 @@ class GitHubAPI:
             body["commit_message"] = commit_message
 
         try:
-            return cast(dict[str, Any], self._request(
-                "PUT",
-                f"repos/{self.repo}/pulls/{self.pr_number}/merge",
-                body=body,
-            ))
+            return cast(
+                dict[str, Any],
+                self._request(
+                    "PUT",
+                    f"repos/{self.repo}/pulls/{self.pr_number}/merge",
+                    body=body,
+                ),
+            )
         except GitHubAPIError as e:
             if e.status_code == 405:
                 raise GitHubAPIError(
@@ -206,16 +221,22 @@ class GitHubAPI:
     def close_pr(self) -> dict[str, Any]:
         """Cierra el PR sin hacer merge."""
         logger.info(f"🚫 Cerrando PR #{self.pr_number}")
-        return cast(dict[str, Any], self._request(
-            "PATCH",
-            f"repos/{self.repo}/pulls/{self.pr_number}",
-            body={"state": "closed"},
-        ))
+        return cast(
+            dict[str, Any],
+            self._request(
+                "PATCH",
+                f"repos/{self.repo}/pulls/{self.pr_number}",
+                body={"state": "closed"},
+            ),
+        )
 
     def add_label(self, label: str) -> dict[str, Any]:
         """Agrega un label al PR."""
-        return cast(dict[str, Any], self._request(
-            "POST",
-            f"repos/{self.repo}/issues/{self.pr_number}/labels",
-            body={"labels": [label]},
-        ))
+        return cast(
+            dict[str, Any],
+            self._request(
+                "POST",
+                f"repos/{self.repo}/issues/{self.pr_number}/labels",
+                body={"labels": [label]},
+            ),
+        )
