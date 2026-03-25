@@ -1,0 +1,15 @@
+# AutoPR Lab - Dependencies
+# Solo usa módulos de la biblioteca estándar de Python 3.10+
+# No se requieren dependencias externas para el core del sistema.
+
+# Testing (opcional, para desarrollo local)
+pytest>=8.0.0
+pytest-cov>=5.0.0
+
+# Linting y formato (opcional, para CI adicional)
+ruff>=0.8.0
+mypy>=1.9.0
+
+# Herramientas de seguridad (opcional, para escaneo)
+safety>=3.0.0
+bandit>=1.7.0

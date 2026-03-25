@@ -1,0 +1,144 @@
+name: "🤖 AutoPR Lab — Automated PR Review"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Este workflow se activa en cada Pull Request y toma decisiones automáticas:
+#   - ✅ MERGE: Si el PR pasa todos los análisis de seguridad
+#   - ⚠️  WARN MERGE: Si hay advertencias no críticas
+#   - ❌ REJECT: Si hay errores críticos o violaciones de seguridad
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    # Filtro opcional: solo activar para ciertos paths
+    # paths:
+    #   - "detectors/**"
+    #   - "tests/**"
+    #   - "docs/**"
+
+# Cancelar workflows anteriores del mismo PR cuando se hace push nuevo
+concurrency:
+  group: autopr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  autopr-analysis:
+    name: "🔍 Security & Quality Analysis"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    # Permisos explícitos — principio de mínimo privilegio
+    permissions:
+      contents: write        # Necesario para hacer merge
+      pull-requests: write   # Necesario para comentar, aprobar y cerrar PRs
+      issues: write          # Necesario para agregar labels
+
+    steps:
+      # ── 1. Checkout del repositorio ──────────────────────────────────
+      - name: "📥 Checkout Repository"
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # Necesario para comparar branches
+
+      # ── 2. Setup Python ──────────────────────────────────────────────
+      - name: "🐍 Setup Python 3.13"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      # ── 3. Instalar dependencias ─────────────────────────────────────
+      - name: "📦 Install Dependencies"
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # ── 4. Validación de seguridad previa ────────────────────────────
+      - name: "🛡️ Pre-flight Security Check"
+        run: |
+          echo "PR Author: ${{ github.event.pull_request.user.login }}"
+          echo "PR Title: ${{ github.event.pull_request.title }}"
+          echo "Base Branch: ${{ github.event.pull_request.base.ref }}"
+          echo "Head Branch: ${{ github.event.pull_request.head.ref }}"
+          echo "Changed Files Count: ${{ github.event.pull_request.changed_files }}"
+          echo "Additions: ${{ github.event.pull_request.additions }}"
+          echo "Deletions: ${{ github.event.pull_request.deletions }}"
+
+          # Validar que el PR viene de un fork (seguridad adicional)
+          # Para repos privados, puedes quitar esta validación
+          echo "Repository: ${{ github.repository }}"
+          echo "Head Repository: ${{ github.event.pull_request.head.repo.full_name }}"
+
+      # ── 5. Ejecutar Decision Engine ───────────────────────────────────
+      - name: "🤖 Run AutoPR Decision Engine"
+        id: autopr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          LOG_LEVEL: "INFO"
+          SCAN_OUTPUT: "scan_result.json"
+          # Activar DRY_RUN=true para probar sin ejecutar acciones reales
+          # DRY_RUN: "true"
+        run: |
+          python scripts/decision_engine.py
+
+      # ── 6. Publicar resultado como artefacto ─────────────────────────
+      - name: "📊 Upload Scan Results"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: "scan-results-pr-${{ github.event.pull_request.number }}"
+          path: scan_result.json
+          retention-days: 30
+
+      # ── 7. Summary del workflow ───────────────────────────────────────
+      - name: "📋 Generate Workflow Summary"
+        if: always()
+        run: |
+          if [ -f scan_result.json ]; then
+            DECISION=$(python -c "import json; d=json.load(open('scan_result.json')); print(d.get('decision','UNKNOWN'))")
+            STATUS=$(python -c "import json; d=json.load(open('scan_result.json')); print(d.get('global_status','UNKNOWN'))")
+            ERRORS=$(python -c "import json; d=json.load(open('scan_result.json')); print(d.get('errors',0))")
+            WARNINGS=$(python -c "import json; d=json.load(open('scan_result.json')); print(d.get('warnings',0))")
+            FILES=$(python -c "import json; d=json.load(open('scan_result.json')); print(d.get('files_analyzed',0))")
+
+            cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## 🤖 AutoPR Lab — PR #${{ github.event.pull_request.number }}
+
+          | Campo | Valor |
+          |-------|-------|
+          | Decisión | \`${DECISION}\` |
+          | Estado | \`${STATUS}\` |
+          | Errores | \`${ERRORS}\` |
+          | Advertencias | \`${WARNINGS}\` |
+          | Archivos analizados | \`${FILES}\` |
+
+          EOF
+
+            if [ "$DECISION" = "MERGE" ]; then
+              echo "### ✅ PR mergeado automáticamente" >> $GITHUB_STEP_SUMMARY
+            elif [ "$DECISION" = "WARN_MERGE" ]; then
+              echo "### ⚠️ PR mergeado con advertencias" >> $GITHUB_STEP_SUMMARY
+            elif [ "$DECISION" = "REJECT" ]; then
+              echo "### ❌ PR rechazado y cerrado" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "## ⚠️ No se generó resultado de análisis" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      # ── 8. Fallar el job si el PR fue rechazado ───────────────────────
+      # (El script ya devuelve exit code 1 en REJECT, pero esto es explícito)
+      - name: "🚦 Check Final Decision"
+        if: always()
+        run: |
+          if [ -f scan_result.json ]; then
+            DECISION=$(python -c "import json; d=json.load(open('scan_result.json')); print(d.get('decision','UNKNOWN'))")
+            if [ "$DECISION" = "REJECT" ]; then
+              echo "❌ PR fue rechazado por AutoPR Lab"
+              exit 1
+            elif [ "$DECISION" = "MERGE" ] || [ "$DECISION" = "WARN_MERGE" ]; then
+              echo "✅ PR fue procesado exitosamente: ${DECISION}"
+              exit 0
+            fi
+          fi
