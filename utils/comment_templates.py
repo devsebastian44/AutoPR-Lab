@@ -7,7 +7,7 @@ Plantillas para los comentarios automáticos del bot en PRs.
 from typing import Any
 
 
-def _findings_section(findings: list[dict]) -> str:
+def _findings_section(findings: list[dict[str, Any]]) -> str:
     """Genera la sección de hallazgos agrupados por estado."""
     if not findings:
         return "_No se encontraron problemas._\n"
@@ -39,7 +39,7 @@ def _findings_section(findings: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def _path_violations_section(path_validation: dict) -> str:
+def _path_violations_section(path_validation: dict[str, Any]) -> str:
     """Genera la sección de violaciones de paths."""
     violations = path_validation.get("violations", [])
     if not violations:

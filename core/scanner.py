@@ -185,6 +185,7 @@ class Scanner:
         pr_number: int,
         changed_files: dict[str, str],  # {file_path: content}
         lines_changed: int = 0,
+        skip_path_validation: bool = False,
     ) -> ScanResult:
         """
         Analiza todos los archivos de un PR y genera el resultado global.
@@ -209,12 +210,16 @@ class Scanner:
         )
 
         path_validation = {
-            "paths_ok": path_ok,
-            "size_ok": size_ok,
+            "paths_ok": path_ok or skip_path_validation,
+            "size_ok": size_ok or skip_path_validation,
             "violations": path_violations + size_violations,
+            "validation_skipped": skip_path_validation,
         }
 
-        if path_violations:
+        if skip_path_validation:
+            logger.info("   🛠️ MANTENIMIENTO: Ignorando validación de paths/tamaño")
+
+        if path_violations and not skip_path_validation:
             logger.warning(f"   ⚠️ Violaciones de paths: {path_violations}")
 
         # ── 2. Análisis de contenido con detectores ──
@@ -234,7 +239,7 @@ class Scanner:
         ok_count = sum(1 for f in all_findings if f["status"] == "OK")
 
         # ── 4. Determinar estado global y decisión ──
-        has_path_violations = not path_ok or not size_ok
+        has_path_violations = (not path_ok or not size_ok) and not skip_path_validation
 
         if has_path_violations or errors > 0:
             global_status = "ERROR"
