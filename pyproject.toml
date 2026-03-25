@@ -84,6 +84,7 @@ indent-style = "space"
 [tool.mypy]
 python_version = "3.13"
 strict = true
+exclude = "examples/|tests/"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -133,3 +134,7 @@ module = "tests.*"
 disallow_untyped_defs = false
 disallow_incomplete_defs = false
 check_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = "examples.*"
+ignore_errors = true

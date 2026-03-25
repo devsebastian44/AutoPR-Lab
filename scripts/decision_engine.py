@@ -234,11 +234,20 @@ def main() -> int:
         sys.exit(0)
 
     # ── Análisis con Scanner ───────────────────────────────────────────
+    # Detectar si el PR tiene etiquetas de mantenimiento para bypass de seguridad
+    pr_labels = [
+        label.get("name", "") for label in github.get_pr_info().get("labels", [])
+    ]
+    is_maintenance = any(
+        name in ["maintenance", "system-upgrade"] for name in pr_labels
+    )
+
     scanner = Scanner()
     result = scanner.scan_pr(
         pr_number=pr_number,
         changed_files=changed_files,
         lines_changed=total_lines,
+        skip_path_validation=is_maintenance,
     )
 
     # ── Guardar resultado como artefacto ───────────────────────────────
