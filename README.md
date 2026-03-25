@@ -291,6 +291,3 @@ Cualquier cambio en estas áreas **nunca se auto-mergea**:
 - El motor de decisión (`core/`, `scripts/`)
 - Los workflows de GitHub Actions
 - Las dependencias del proyecto
-
-<!-- Final Simulation Test -->
-![AutoPR Badge](https://img.shields.io/badge/AutoPR-Verified-success?style=for-the-badge)
