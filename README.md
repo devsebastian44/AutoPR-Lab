@@ -288,6 +288,27 @@ Ver más ejemplos: [docs/example-outputs.md](docs/example-outputs.md)
 
 ### Qué requiere revisión manual
 Cualquier cambio en estas áreas **nunca se auto-mergea**:
-- El motor de decisión (`core/`, `scripts/`)
+- El motor de decisión (`src/core/`, `scripts/`)
 - Los workflows de GitHub Actions
 - Las dependencias del proyecto
+
+---
+
+## 🏛️ Arquitectura DevSecOps (GitLab vs GitHub)
+
+Para mantener los estándares más altos de seguridad profesional, **AutoPR-Lab** utiliza una arquitectura de repositorio dual.
+
+1. **GitLab (Laboratorio Privado)**: Actúa como el *Source of Truth*. Contiene todo el código núcleo (`src/core`), tests exhaustivos de vulnerabilidades, pipelines de Integración Continua (`.gitlab-ci.yml`) y scripts de publicación de automatización privada. Aquí es donde se realiza todo el desarrollo y de donde se extraen las métricas.
+2. **GitHub (Portafolio Público)**: Es un entorno estrictamente *sanitizado*. Sirve como muestra pública, portafolio y demostración de arquitectura. Las partes críticas de análisis, tests ofensivos/defensivos y flujos de automatización privada son extraídas sistemáticamente.
+
+### 🔄 Flujo de Publicación (publish_public.ps1)
+
+El script `./scripts/publish_public.ps1` garantiza que nunca se filtren componentes sensibles del laboratorio al portafolio.
+Ejecuta el siguiente pipeline seguro:
+1. Validar el estado limpio de la rama `main` y sincronizar contra GitLab.
+2. Crear un entorno en una rama de publicación aislada temporal.
+3. Ejecutar `git rm` estructurado para borrar toda la ruta de tests, configuraciones, infraestructura de despliegue interno y lógica pesada.
+4. Efectuar un un force-push de la versión higienizada a GitHub origin.
+5. Devolver al desarrollador intacto al entorno del Laboratorio Privado.
+
+Puedes consultar el diagrama detallado del flujo en [diagrams/architecture.md](diagrams/architecture.md).

@@ -46,8 +46,8 @@ Documentation = "https://github.com/Devsebastian44/pull-shark-test/docs"
 "Bug Tracker" = "https://github.com/Devsebastian44/pull-shark-test/issues"
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["core*", "detectors*", "utils*", "scripts*"]
+where = ["src"]
+include = ["core*", "detectors*", "utils*"]
 
 [tool.ruff]
 line-length = 88
@@ -102,6 +102,7 @@ strict_equality = true
 minversion = "8.0"
 addopts = "-ra -q --strict-markers --strict-config"
 testpaths = ["tests"]
+pythonpath = ["src"]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
