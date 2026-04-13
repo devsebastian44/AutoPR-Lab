@@ -104,7 +104,9 @@ class GitHubAPI:
     def get_file_content(self, raw_url: str) -> str:
         """Descarga el contenido de un archivo del PR usando su raw_url."""
         if not raw_url.startswith("https://"):
-            logger.warning(f"URL rechazada por seguridad (solo https permitido): {raw_url}")
+            logger.warning(
+                f"URL rechazada por seguridad (solo https permitido): {raw_url}"
+            )
             return ""
 
         req = urllib.request.Request(
