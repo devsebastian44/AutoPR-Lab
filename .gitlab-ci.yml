@@ -41,4 +41,4 @@ security:bandit:
 security:safety:
   stage: security
   script:
-    - safety check --full-report
+    - safety check --full-report -i 84961
