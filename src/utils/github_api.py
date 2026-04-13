@@ -64,7 +64,7 @@ class GitHubAPI:
         req = urllib.request.Request(url, data=data, headers=headers, method=method)
 
         try:
-            with urllib.request.urlopen(req) as response:
+            with urllib.request.urlopen(req) as response:  # nosec B310
                 response_body = response.read().decode("utf-8")
                 return json.loads(response_body) if response_body.strip() else {}
         except urllib.error.HTTPError as e:
@@ -103,6 +103,10 @@ class GitHubAPI:
 
     def get_file_content(self, raw_url: str) -> str:
         """Descarga el contenido de un archivo del PR usando su raw_url."""
+        if not raw_url.startswith("https://"):
+            logger.warning(f"URL rechazada por seguridad (solo https permitido): {raw_url}")
+            return ""
+
         req = urllib.request.Request(
             raw_url,
             headers={
@@ -111,7 +115,7 @@ class GitHubAPI:
             },
         )
         try:
-            with urllib.request.urlopen(req) as response:
+            with urllib.request.urlopen(req) as response:  # nosec B310
                 return cast(str, response.read().decode("utf-8", errors="replace"))
         except Exception as e:
             logger.warning(f"No se pudo descargar {raw_url}: {e}")
