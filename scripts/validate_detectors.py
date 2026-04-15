@@ -14,8 +14,8 @@ root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, root_dir)
 sys.path.insert(0, os.path.join(root_dir, "src"))
 
-from detectors import discover_detectors
-from detectors.detector_validator import DetectorFormatValidator
+from detectors import discover_detectors  # noqa: E402
+from detectors.detector_validator import DetectorFormatValidator  # noqa: E402
 
 
 def validate_all() -> None:

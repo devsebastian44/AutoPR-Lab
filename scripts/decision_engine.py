@@ -28,14 +28,14 @@ root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, root_dir)
 sys.path.insert(0, os.path.join(root_dir, "src"))
 
-from core.scanner import Scanner, ScanResult
-from utils.comment_templates import (
+from core.scanner import Scanner, ScanResult  # noqa: E402
+from utils.comment_templates import (  # noqa: E402
     build_merge_comment,
     build_reject_comment,
     build_warn_merge_comment,
 )
-from utils.github_api import GitHubAPI, GitHubAPIError
-from utils.logger import get_logger
+from utils.github_api import GitHubAPI, GitHubAPIError  # noqa: E402
+from utils.logger import get_logger  # noqa: E402
 
 logger = get_logger("decision_engine")
 
