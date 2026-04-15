@@ -43,11 +43,11 @@ jobs:
           python-version: "3.13"
           cache: "pip"
 
-      # ── 3. Instalar dependencias de seguridad ────────────────────────
-      - name: "📦 Install Security Tools"
+      # ── 3. Instalar dependencias ─────────────────────────────────────
+      - name: "📦 Install Project & Tools"
         run: |
           python -m pip install --upgrade pip
-          pip install safety>=3.0.0 bandit>=1.7.0
+          pip install -e .[security]
 
       # ── 4. Escaneo con Safety (vulnerabilidades en dependencias) ─────
       - name: "🔍 Safety Scan - Dependencies Vulnerabilities"
