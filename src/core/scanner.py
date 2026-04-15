@@ -59,7 +59,7 @@ class SecurityRules:
 
     # Paths permitidos para auto-merge (solo estos)
     ALLOWED_PATHS = [
-        "detectors/",
+        "src/detectors/",
         "tests/",
         "docs/",
         "examples/",
@@ -70,15 +70,16 @@ class SecurityRules:
 
     # Paths SIEMPRE prohibidos (bloquean el merge aunque todo lo demás sea OK)
     FORBIDDEN_PATHS = [
-        "core/",
+        "src/core/",
+        "src/utils/",
         ".github/workflows/",
         "scripts/",
         "requirements.txt",
-        "setup.py",
-        "setup.cfg",
         "pyproject.toml",
         "Makefile",
+        "Dockerfile",
         ".gitignore",
+        ".gitlab-ci.yml",
     ]
 
     # Límites cuantitativos

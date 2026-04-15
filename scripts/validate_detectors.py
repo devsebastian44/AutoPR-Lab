@@ -9,8 +9,10 @@ import os
 import sys
 from typing import Any, cast
 
-# Agregar el directorio raíz al path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Agregar el directorio raíz y src al path
+root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, root_dir)
+sys.path.insert(0, os.path.join(root_dir, "src"))
 
 from detectors import discover_detectors
 from detectors.detector_validator import DetectorFormatValidator

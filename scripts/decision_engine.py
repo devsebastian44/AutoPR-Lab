@@ -23,8 +23,10 @@ import json
 import os
 import sys
 
-# Agregar el directorio raíz al path para imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Agregar el directorio raíz y src al path para imports
+root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, root_dir)
+sys.path.insert(0, os.path.join(root_dir, "src"))
 
 from core.scanner import Scanner, ScanResult
 from utils.comment_templates import (
