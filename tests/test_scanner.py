@@ -19,7 +19,7 @@ class TestSecurityRules(unittest.TestCase):
 
     def test_allowed_paths_accepted(self):
         files = [
-            "detectors/my_new_detector.py",
+            "src/detectors/my_new_detector.py",
             "tests/test_my_detector.py",
             "docs/guide.md",
         ]
@@ -28,7 +28,7 @@ class TestSecurityRules(unittest.TestCase):
         self.assertEqual(len(violations), 0)
 
     def test_forbidden_core_path_blocked(self):
-        files = ["core/scanner.py"]
+        files = ["src/core/scanner.py"]
         is_valid, violations = SecurityRules.validate_paths(files)
         self.assertFalse(is_valid)
         self.assertTrue(len(violations) > 0)
@@ -46,8 +46,8 @@ class TestSecurityRules(unittest.TestCase):
 
     def test_mixed_allowed_and_forbidden(self):
         files = [
-            "detectors/new_detector.py",  # OK
-            "core/scanner.py",  # FORBIDDEN
+            "src/detectors/new_detector.py",  # OK
+            "src/core/scanner.py",  # FORBIDDEN
         ]
         is_valid, violations = SecurityRules.validate_paths(files)
         self.assertFalse(is_valid)
@@ -83,7 +83,7 @@ class TestScannerIntegration(unittest.TestCase):
     def test_clean_detector_gets_merge(self):
         """Un detector limpio y válido debe resultar en MERGE."""
         changed_files = {
-            "detectors/my_clean_detector.py": """
+            "src/detectors/my_clean_detector.py": """
 from detectors.base_detector import BaseDetector, DetectorResult, DetectorStatus
 from typing import List
 
@@ -118,7 +118,7 @@ class TestMyCleanDetector(unittest.TestCase):
     def test_api_key_in_detector_gets_rejected(self):
         """Un detector con API key hardcodeada debe ser rechazado."""
         changed_files = {
-            "detectors/bad_detector.py": """
+            "src/detectors/bad_detector.py": """
 from detectors.base_detector import BaseDetector, DetectorResult, DetectorStatus
 from typing import List
 
@@ -148,7 +148,7 @@ class BadDetector(BaseDetector):
     def test_core_modification_gets_rejected(self):
         """Modificar /core/ debe ser rechazado independientemente del contenido."""
         changed_files = {
-            "core/scanner.py": "# Perfectly clean code\nprint('hello')",
+            "src/core/scanner.py": "# Perfectly clean code\nprint('hello')",
         }
 
         result = self.scanner.scan_pr(
