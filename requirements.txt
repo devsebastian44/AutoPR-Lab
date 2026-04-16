@@ -3,7 +3,7 @@
 # No se requieren dependencias externas para el core del sistema.
 
 # Testing (opcional, para desarrollo local)
-pytest>=8.0.0
+pytest>=9.0.3
 pytest-cov>=5.0.0
 
 # Linting y formato (opcional, para CI adicional)
