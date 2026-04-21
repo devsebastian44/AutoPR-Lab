@@ -159,13 +159,14 @@ PR Abierto / Actualizado
 ### Uso local / DRY_RUN
 
 ```bash
-# Configurar variables de entorno
-export GITHUB_TOKEN="ghp_tu_token_aqui"
-export GITHUB_REPOSITORY="tu_usuario/tu_repo"
-export PR_NUMBER="42"
-export DRY_RUN="true"   # Sin acciones reales en GitHub API
+# 1. Copiar el archivo de entorno de ejemplo
+cp .env.example .env
 
-# Ejecutar el motor de decisión
+# 2. Configurar variables en .env (no requiere tokens reales si DRY_RUN=true)
+# GITHUB_TOKEN="mock_token"
+# DRY_RUN="true"
+
+# 3. Ejecutar el motor de decisión
 python scripts/decision_engine.py
 ```
 
@@ -339,7 +340,35 @@ REQUIRED_METHODS = ["name", "description", "severity", "analyze"]
 
 ### Modelo de permisos del GITHUB_TOKEN
 
-El sistema utiliza únicamente el `GITHUB_TOKEN` inyectado automáticamente por GitHub Actions, sin requerir tokens personales ni secrets adicionales. Los permisos mínimos requeridos son `pull-requests: write` y `contents: write`.
+  El sistema utiliza únicamente el `GITHUB_TOKEN` inyectado automáticamente por GitHub Actions, sin requerir tokens personales ni secrets adicionales. Los permisos mínimos requeridos son `pull-requests: write` y `contents: write`.
+
+---
+
+## 🤝 How to Contribute
+
+¡Las contribuciones son bienvenidas! Este proyecto está diseñado para ser un laboratorio abierto y portafolio colaborativo donde otros desarrolladores pueden sumar detectores o mejorar el motor.
+
+**Pasos para contribuir:**
+
+1. **Haz un Fork** del repositorio a tu cuenta de GitHub.
+2. **Clona** tu fork localmente y configura el entorno:
+
+   ```bash
+   git clone https://github.com/devsebastian44/AutoPR-Lab.git
+   cd AutoPR-Lab
+   pip install -e ".[dev,security]"
+   cp .env.example .env
+   ```
+
+3. **Crea una rama** para tu funcionalidad o corrección (`git checkout -b feature/nuevo-detector`).
+4. **Desarrolla y testea** localmente:
+   - Asegúrate de agregar tests unitarios en `tests/` (sin usar credenciales reales, usa mocks).
+   - Valida que todos los tests pasen usando `python -m pytest tests/`.
+   - Verifica la calidad con `ruff check .` y `mypy .`.
+5. **Haz Commit y Push** de tus cambios. Los pre-commit hooks integrados validarán tu código.
+6. **Abre un Pull Request** hacia la rama `main` del repositorio original.
+   - Nuestro CI workflow (`ci.yml`) validará automáticamente tus cambios (tests, linting, seguridad).
+   - Nuestro motor AutoPR evaluará las reglas de seguridad de las rutas que modificaste.
 
 ---
 
