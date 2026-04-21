@@ -1,0 +1,65 @@
+name: "⚙️ CI / Code Quality"
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  lint-and-test:
+    name: "🧪 Lint & Test"
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: "📥 Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "🐍 Setup Python 3.11"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: "📦 Install Dependencies"
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev,security]
+
+      - name: "🧹 Ruff Lint & Format Check"
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: "✅ Pytest"
+        run: |
+          pytest tests/ --cov=. --cov-report=xml
+
+  security-scans:
+    name: "🛡️ Security Scans"
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: "📥 Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "🐍 Setup Python 3.11"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: "📦 Install Dependencies"
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[security]
+
+      - name: "🔍 Bandit Security Scan"
+        run: |
+          bandit -r src/ -ll -ii
+
+      - name: "🏥 Safety Dependency Check"
+        run: |
+          # Solo escanea las dependencias reportando vulnerabilidades críticas.
+          # Ignore some specific IDs if you have known false positives, e.g., -i 84961
+          safety check --full-report
