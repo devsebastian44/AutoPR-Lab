@@ -34,10 +34,8 @@ git checkout -B public main
 # 5. Filtrado de Archivos (Lo que NO va a GitHub)
 Write-Host "[*] Aplicando filtros de seguridad DevSecOps..." -ForegroundColor Cyan
 # Eliminamos lo que es exclusivo del laboratorio privado
-git rm -r --cached tests/ -f 2>$null
+# (Mantenemos tests/, scripts/ y src/core/ para que el portafolio sea funcional y pase CI)
 git rm -r --cached configs/ -f 2>$null
-git rm -r --cached scripts/ -f 2>$null
-git rm -r --cached src/core/ -f 2>$null
 git rm --cached .gitlab-ci.yml -f 2>$null
 
 # 6. Commit de Lanzamiento y Push a GitHub

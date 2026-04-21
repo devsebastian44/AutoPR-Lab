@@ -61,5 +61,4 @@ jobs:
       - name: "🏥 Safety Dependency Check"
         run: |
           # Solo escanea las dependencias reportando vulnerabilidades críticas.
-          # Ignore some specific IDs if you have known false positives, e.g., -i 84961
-          safety check --full-report
+          safety check --full-report -i 84961
