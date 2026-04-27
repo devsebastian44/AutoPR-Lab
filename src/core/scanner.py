@@ -79,7 +79,6 @@ class SecurityRules:
         "Makefile",
         "Dockerfile",
         ".gitignore",
-        ".gitlab-ci.yml",
     ]
 
     # Límites cuantitativos

@@ -7,6 +7,8 @@
 ![Pytest](https://img.shields.io/badge/Testing-Pytest-0A9EDC?style=flat&logo=pytest&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-brightgreen?style=flat)
 
+> **IMPORTANT:** This project is for educational and ethical cybersecurity purposes only.
+
 ---
 
 ## 🧠 Overview
@@ -372,18 +374,7 @@ REQUIRED_METHODS = ["name", "description", "severity", "analyze"]
 
 ---
 
-## 🌐 Repository Architecture
 
-Este proyecto sigue una arquitectura distribuida con separación de entornos:
-
-- **GitHub** — Implementación pública completa, portafolio técnico, documentación y laboratorio de PR automation
-- **GitLab** — Entorno de laboratorio extendido: implementación con integraciones adicionales, pipelines complementarios y configuraciones de entorno avanzadas
-
-### 🔗 Full Source Code
-
-👉 Código completo disponible en GitLab: [https://gitlab.com/group-programming-lab/AutoPR-Lab](https://gitlab.com/group-programming-lab/AutoPR-Lab)
-
----
 
 ## 🚀 Roadmap
 
@@ -391,7 +382,6 @@ Posibles extensiones identificadas desde la arquitectura modular del sistema:
 
 - [ ] **Detector de dependencias vulnerables** — Integrar análisis de `requirements.txt` contra bases de datos de vulnerabilidades (PyPI Advisory Database, OSV) como nuevo detector modular.
 - [ ] **Detector de complejidad ciclomática** — Rechazar automáticamente funciones con complejidad excesiva (CC > 10) usando la librería `radon`.
-- [ ] **Soporte GitLab CI/CD** — Adaptar el motor de decisión para operar sobre Merge Requests de GitLab usando la GitLab REST API.
 - [ ] **Dashboard de métricas** — Generar un reporte histórico de decisiones (tasa de rechazo, detectores más activos, tiempo medio de review) exportable como artefacto del workflow.
 - [ ] **Configuración por repositorio** — Soporte para un archivo `.autopr.yml` en el repositorio raíz donde cada proyecto defina sus propias reglas de rutas, límites de tamaño y severidades.
 - [ ] **Detector de cobertura de tests** — Verificar que los nuevos detectores incluyan tests unitarios antes de autorizar el merge automático.
